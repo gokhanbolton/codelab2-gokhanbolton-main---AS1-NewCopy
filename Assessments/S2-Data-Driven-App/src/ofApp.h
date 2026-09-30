@@ -1,6 +1,6 @@
-// Header for application
 #pragma once
 
+#include "Country.h"
 #include "ofMain.h"
 #include "ofxGui.h"
 
@@ -10,29 +10,23 @@ public:
 	void update() override;
 	void draw() override;
 
-	// API Handling
-	void fetchWeatherData();
+	// API Metotlari
+	void fetchCountryData();
 	void urlResponse(ofHttpResponse & response);
 
-	// GUI Elements
+	// GUI Elemanlari
 	ofxPanel gui;
-	ofxInputField<std::string> locationInput;
+	ofxInputField<std::string> countryInput;
 	ofxButton searchBtn;
 
-	// Custom Fonts for Big Text Display
+	// Fontlar
 	ofTrueTypeFont titleFont;
 	ofTrueTypeFont bodyFont;
 
-	// API Config & Weather Data Variables
-	std::string apiKey = "4f7ec3c7b26545ee9ca113406261007";
-	std::string cityName = "N/A";
-	std::string country = "N/A";
-	std::string conditionText = "N/A";
+	// OOP Modeli: Country Nesnesi
+	Country currentCountry;
 
-	float tempC = 0.0f;
-	float feelsLikeC = 0.0f;
-	int humidity = 0;
-	std::string statusMessage = "Enter a city to search.";
+	std::string statusMessage = "Enter a country name to search.";
 	bool isLoading = false;
 	bool hasError = false;
 };

@@ -1,121 +1,125 @@
 #include "ofApp.h"
 
 void ofApp::setup() {
-    ofSetBackgroundColor(25, 30, 40);
-    ofRegisterURLNotification(this);
+	ofSetBackgroundColor(25, 30, 40);
+	ofRegisterURLNotification(this);
 
-    // Load built-in system font at large sizes (24pt for body, 36pt for headers)
-    bodyFont.load(OF_TTF_SANS, 24);
-titleFont.load(OF_TTF_SANS, 36);
+	// Fontlari sistemden yukle
+	bodyFont.load(OF_TTF_SANS, 20);
+	titleFont.load(OF_TTF_SANS, 32);
 
-// Drastically scale up GUI panel width and control height
-    ofxGuiSetDefaultWidth(500);
-    ofxGuiSetDefaultHeight(50);
+	// GUI boyutlandirma
+	ofxGuiSetDefaultWidth(450);
+	ofxGuiSetDefaultHeight(45);
 
-    // Setup GUI Controls
-    gui.setup("WEATHER DASHBOARD");
-gui.add(locationInput.setup("City Search", "London"));
-gui.add(searchBtn.setup("Get Forecast"));
+	// GUI Kurulumu
+	gui.setup("COUNTRY FACTS DASHBOARD");
+	gui.add(countryInput.setup("Country", "Italy"));
+	gui.add(searchBtn.setup("Search Country"));
 
-searchBtn.addListener(this, &ofApp::fetchWeatherData);
+	searchBtn.addListener(this, &ofApp::fetchCountryData);
 }
-void ofApp::fetchWeatherData() {
-	std::string city = locationInput;
 
-	if (city.empty()) {
+void ofApp::fetchCountryData() {
+	std::string query = countryInput;
+
+	// Temizlik
+	ofStringReplace(query, "\n", "");
+	ofStringReplace(query, "\r", "");
+	query = ofTrim(query);
+
+	if (query.empty()) {
 		hasError = true;
-		statusMessage = "Error: Input cannot be empty.";
+		statusMessage = "Error: Please enter a country name.";
 		return;
 	}
 
+	// Bosluklari URL bicimine cevir
+	ofStringReplace(query, " ", "%20");
+
 	isLoading = true;
 	hasError = false;
-	statusMessage = "Fetching weather data...";
+	statusMessage = "Fetching country data...";
 
-	std::string url = "https://api.weatherapi.com/v1/current.json?key=";
-	url += apiKey;
-	url += "&q=" + city + "&aqi=no";
-
-	ofLoadURLAsync(url, "weatherReq");
+	std::string url = "https://www.apicountries.com/name/" + query;
+	ofLoadURLAsync(url, "countryReq");
 }
+
 void ofApp::urlResponse(ofHttpResponse & response) {
 	isLoading = false;
 
 	if (response.status == 200) {
-		ofJson json = ofJson::parse(response.data.getText());
+		try {
+			std::string rawData = response.data.getText();
+			ofJson json = ofJson::parse(rawData);
 
-		if (json.contains("location") && json.contains("current")) {
-			cityName = json["location"]["name"].get<std::string>();
-			country = json["location"]["country"].get<std::string>();
+			ofJson item;
+			if (json.is_array() && !json.empty()) {
+				item = json[0];
+			} else if (json.is_object()) {
+				item = json;
+			}
 
-			tempC = json["current"]["temp_c"].get<float>();
-			feelsLikeC = json["current"]["feelslike_c"].get<float>();
-			humidity = json["current"]["humidity"].get<int>();
-			conditionText = json["current"]["condition"]["text"].get<std::string>();
-			statusMessage = "Data successfully loaded!";
-		} else {
+			if (!item.empty() && (item.contains("name") || item.contains("capital"))) {
+				// Veriyi Country nesnesine aktar (OOP)
+				currentCountry.parseFromJson(item);
+
+				hasError = false;
+				statusMessage = "Country loaded successfully!";
+			} else {
+				hasError = true;
+				statusMessage = "Error: Country not found.";
+			}
+
+		} catch (const std::exception & e) {
 			hasError = true;
-			statusMessage = "Error: Invalid JSON structure.";
+			statusMessage = "Parsing Error: " + std::string(e.what());
 		}
-	} else if (response.status == 400 || response.status == 404) {
+	} else if (response.status == 404) {
 		hasError = true;
-		statusMessage = "Error: Location not found. Try another city.";
+		statusMessage = "Error: Country not found (404).";
 	} else {
 		hasError = true;
 		statusMessage = "API Error: HTTP Code " + ofToString(response.status);
 	}
 }
+
 void ofApp::update() {
-	// Logic updates
 }
 
 void ofApp::draw() {
-		float marginX = 80.0f;
-		float startY = 80.0f;
+	float marginX = 60.0f;
+	float startY = 70.0f;
 
-		// Draw Large Screen Header
-		ofSetColor(255);
-		titleFont.drawString("WEATHER FORECAST", marginX, startY);
+	// Baslik
+	ofSetColor(255);
+	titleFont.drawString("COUNTRY FACTS VIEWER", marginX, startY);
 
-		// Position Large GUI Panel on the Left
-		float guiY = startY + 50.0f;
-		gui.setPosition(marginX, guiY);
-		gui.draw();
+	// Sol Panel: GUI
+	float guiY = startY + 40.0f;
+	gui.setPosition(marginX, guiY);
+	gui.draw();
 
-		// Position Results Card on the Right Half of Screen
-		float textX = marginX + 560.0f;
-		float lineSpacing = 55.0f;
-		float currentY = guiY + 40.0f;
+	// Sag Panel: Country Nesnesini cizdir
+	float textX = marginX + 500.0f;
+	float currentY = guiY + 35.0f;
 
-		// Draw Weather Details with High-Resolution TTF Font
-		bodyFont.drawString("Location: " + cityName + ", " + country, textX, currentY);
-		currentY += lineSpacing;
+	ofSetColor(255);
+	currentCountry.draw(textX, currentY, bodyFont);
 
-		bodyFont.drawString("Condition: " + conditionText, textX, currentY);
-		currentY += lineSpacing;
+	// Durum Karti
+	float statusY = currentY + (42.0f * 5) + 20.0f;
 
-		bodyFont.drawString("Temperature: " + ofToString(tempC, 1) + " C", textX, currentY);
-		currentY += lineSpacing;
+	ofColor bannerColor = ofColor::darkGreen;
+	if (isLoading) bannerColor = ofColor::orange;
+	if (hasError) bannerColor = ofColor::darkRed;
 
-		bodyFont.drawString("Feels Like: " + ofToString(feelsLikeC, 1) + " C", textX, currentY);
-		currentY += lineSpacing;
+	float statusWidth = bodyFont.stringWidth("Status: " + statusMessage) + 30.0f;
+	float statusHeight = bodyFont.stringHeight("Status: " + statusMessage) + 20.0f;
 
-		bodyFont.drawString("Humidity: " + ofToString(humidity) + "%", textX, currentY);
-		currentY += lineSpacing + 20.0f;
+	ofSetColor(bannerColor);
+	ofDrawRectangle(textX - 10.0f, statusY - statusHeight + 5.0f, statusWidth, statusHeight);
 
-		// Draw Large Status Banner Background Box
-		ofColor bannerColor = ofColor::darkGreen;
-		if (isLoading) bannerColor = ofColor::orange;
-		if (hasError) bannerColor = ofColor::darkRed;
-
-		float statusWidth = bodyFont.stringWidth("Status: " + statusMessage) + 30.0f;    
-
-
-		float statusHeight = bodyFont.stringHeight("Status: " + statusMessage) + 20.0f;
-
-		ofSetColor(bannerColor);
-		ofDrawRectangle(textX - 10.0f, currentY - statusHeight + 5.0f, statusWidth, statusHeight);
-
-		ofSetColor(255);
-		bodyFont.drawString("Status: " + statusMessage, textX, currentY);
-	}
+	ofSetColor(255);
+	bodyFont.drawString("Status: " + statusMessage, textX, statusY);
+}
