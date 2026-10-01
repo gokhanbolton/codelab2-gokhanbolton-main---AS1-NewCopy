@@ -15,13 +15,13 @@ private:
 public:
 	Country();
 
-	// Verileri JSON nesnesinden ayristirip atayan metot
+	// Deserialises and binds data attributes from a JSON object
 	void parseFromJson(const ofJson & item);
 
-	// Ekrana bilgileri cizen metot (Encapsulation)
+	// Renders encapsulated demographic data to the canvas
 	void draw(float x, float y, ofTrueTypeFont & font);
 
-	// Getter metotlari
+	// Public accessor methods (Getters)
 	std::string getCommonName() const;
 	std::string getOfficialName() const;
 	std::string getCapital() const;

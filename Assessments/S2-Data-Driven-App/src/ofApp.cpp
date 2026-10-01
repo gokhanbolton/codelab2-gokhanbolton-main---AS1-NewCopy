@@ -4,15 +4,15 @@ void ofApp::setup() {
 	ofSetBackgroundColor(25, 30, 40);
 	ofRegisterURLNotification(this);
 
-	// Fontlari sistemden yukle
+	// Load system vector fonts
 	bodyFont.load(OF_TTF_SANS, 20);
 	titleFont.load(OF_TTF_SANS, 32);
 
-	// GUI boyutlandirma
+	// Customise ofxGui component dimensions
 	ofxGuiSetDefaultWidth(450);
 	ofxGuiSetDefaultHeight(45);
 
-	// GUI Kurulumu
+	// Initialise graphical user interface controls
 	gui.setup("COUNTRY FACTS DASHBOARD");
 	gui.add(countryInput.setup("Country", "Italy"));
 	gui.add(searchBtn.setup("Search Country"));
@@ -23,7 +23,7 @@ void ofApp::setup() {
 void ofApp::fetchCountryData() {
 	std::string query = countryInput;
 
-	// Temizlik
+	// Input sanitisation: strip newline characters and whitespace
 	ofStringReplace(query, "\n", "");
 	ofStringReplace(query, "\r", "");
 	query = ofTrim(query);
@@ -34,7 +34,7 @@ void ofApp::fetchCountryData() {
 		return;
 	}
 
-	// Bosluklari URL bicimine cevir
+	// URL percent-encoding for multi-word queries
 	ofStringReplace(query, " ", "%20");
 
 	isLoading = true;
@@ -61,7 +61,7 @@ void ofApp::urlResponse(ofHttpResponse & response) {
 			}
 
 			if (!item.empty() && (item.contains("name") || item.contains("capital"))) {
-				// Veriyi Country nesnesine aktar (OOP)
+				// Delegate deserialisation to the encapsulated Country model (OOP)
 				currentCountry.parseFromJson(item);
 
 				hasError = false;
@@ -91,23 +91,23 @@ void ofApp::draw() {
 	float marginX = 60.0f;
 	float startY = 70.0f;
 
-	// Baslik
+	// Application Header
 	ofSetColor(255);
 	titleFont.drawString("COUNTRY FACTS VIEWER", marginX, startY);
 
-	// Sol Panel: GUI
+	// Left Column: Render GUI controls
 	float guiY = startY + 40.0f;
 	gui.setPosition(marginX, guiY);
 	gui.draw();
 
-	// Sag Panel: Country Nesnesini cizdir
+	// Right Column: Render encapsulated Country entity
 	float textX = marginX + 500.0f;
 	float currentY = guiY + 35.0f;
 
 	ofSetColor(255);
 	currentCountry.draw(textX, currentY, bodyFont);
 
-	// Durum Karti
+	// Status Notification Card
 	float statusY = currentY + (42.0f * 5) + 20.0f;
 
 	ofColor bannerColor = ofColor::darkGreen;

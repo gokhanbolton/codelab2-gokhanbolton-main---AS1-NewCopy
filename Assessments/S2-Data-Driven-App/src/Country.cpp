@@ -13,7 +13,7 @@ Country::Country() {
 void Country::parseFromJson(const ofJson & item) {
 	if (item.empty()) return;
 
-	// Ulke Adi
+	// Country Name Extraction
 	if (item.contains("name")) {
 		if (item["name"].is_object() && item["name"].contains("common")) {
 			commonName = item["name"]["common"].get<std::string>();
@@ -24,7 +24,7 @@ void Country::parseFromJson(const ofJson & item) {
 		}
 	}
 
-	// Baskent
+	// Capital City Parsing
 	if (item.contains("capital")) {
 		if (item["capital"].is_array() && !item["capital"].empty()) {
 			capital = item["capital"][0].get<std::string>();
@@ -35,14 +35,14 @@ void Country::parseFromJson(const ofJson & item) {
 		capital = "None";
 	}
 
-	// Bolge & Alt Bolge
+	// Region & Subregion
 	region = item.value("region", "N/A");
 	subregion = item.value("subregion", "N/A");
 
-	// Para Birimi (Currency) Cozumleme
+	// Currency Deserialisation
 	currency = "N/A";
 	if (item.contains("currencies")) {
-		// Durum 1: Nesne formatinda (orn: {"TRY": {"name": "Turkish lira", "symbol": "₺"}})
+		// Case 1: Object format (e.g. {"TRY": {"name": "Turkish lira", "symbol": "₺"}})
 		if (item["currencies"].is_object() && !item["currencies"].empty()) {
 			for (auto it = item["currencies"].begin(); it != item["currencies"].end(); ++it) {
 				std::string code = it.key();
@@ -62,7 +62,7 @@ void Country::parseFromJson(const ofJson & item) {
 				break;
 			}
 		}
-		// Durum 2: Dizi formatinda (orn: [{"code": "TRY", "name": "Turkish lira", "symbol": "₺"}])
+		// Case 2: Array format (e.g. [{"code": "TRY", "name": "Turkish lira", "symbol": "₺"}])
 		else if (item["currencies"].is_array() && !item["currencies"].empty()) {
 			auto firstCurr = item["currencies"][0];
 			if (firstCurr.is_object()) {
@@ -79,7 +79,7 @@ void Country::parseFromJson(const ofJson & item) {
 		}
 	}
 
-	// Nufus
+	// Population
 	population = item.value("population", 0);
 }
 

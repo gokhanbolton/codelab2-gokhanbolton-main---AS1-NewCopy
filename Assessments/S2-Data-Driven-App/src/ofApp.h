@@ -10,20 +10,20 @@ public:
 	void update() override;
 	void draw() override;
 
-	// API Metotlari
+	// Asynchronous API network methods
 	void fetchCountryData();
 	void urlResponse(ofHttpResponse & response);
 
-	// GUI Elemanlari
+	// GUI Controls (ofxGui)
 	ofxPanel gui;
 	ofxInputField<std::string> countryInput;
 	ofxButton searchBtn;
 
-	// Fontlar
+	// Typography / Font assets
 	ofTrueTypeFont titleFont;
 	ofTrueTypeFont bodyFont;
 
-	// OOP Modeli: Country Nesnesi
+	// Domain Model: Encapsulated Country entity (OOP)
 	Country currentCountry;
 
 	std::string statusMessage = "Enter a country name to search.";
